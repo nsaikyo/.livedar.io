@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NAO. TOKYO | Ultra-Creative</title>
-    <!-- Core Libraries -->
+    <!-- Core Engine -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -22,6 +22,7 @@
         }
         #root { min-height: 100vh; }
         
+        /* 環境テクスチャ：背景ノイズ */
         .noise-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -31,18 +32,18 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
+        /* 究極のグリッチ感 */
         .glitch-active {
-            animation: glitch-vibe 0.15s infinite;
-            filter: contrast(1.3) saturate(1.2);
+            animation: glitch-vibe 0.1s infinite;
+            filter: contrast(1.4) saturate(1.2);
         }
         @keyframes glitch-vibe {
-            0% { transform: translate(0); clip-path: inset(15% 0 75% 0); }
-            25% { transform: translate(-2px, 1px); }
-            50% { transform: translate(2px, -1px); clip-path: inset(80% 0 5% 0); }
+            0% { transform: translate(0); clip-path: inset(10% 0 70% 0); }
+            50% { transform: translate(-2px, 1px); }
             100% { transform: translate(0); }
         }
 
-        /* --- アトムの飛翔アニメーション（向きを進行方向に補正） --- */
+        /* アトム飛翔：左右・奥行きの補正 */
         .atom-hologram {
             position: fixed;
             pointer-events: none;
@@ -51,41 +52,33 @@
             will-change: transform, opacity;
         }
 
-        /* 左から右上へ（手前：向きを上向きに固定） */
-        @keyframes fly-LtoR-Front {
-            0% { transform: translate(-40vw, 100vh) rotate(-15deg) scale(0.5); opacity: 0; }
+        /* 左から右上へ（手前） */
+        @keyframes fly-LtoR {
+            0% { transform: translate(-30vw, 100vh) rotate(-20deg) scale(0.4); opacity: 0; }
             15% { opacity: 0.2; }
             85% { opacity: 0.2; }
-            100% { transform: translate(120vw, -30vh) rotate(-25deg) scale(0.7); opacity: 0; }
+            100% { transform: translate(110vw, -20vh) rotate(-35deg) scale(0.6); opacity: 0; }
         }
 
-        /* 右から左上へ（中間：反転させて向きを合わせる） */
-        @keyframes fly-RtoL-Mid {
-            0% { transform: translate(110vw, 110vh) rotate(15deg) scaleX(-1) scale(0.3); opacity: 0; }
+        /* 右から左上へ（反転・中間層） */
+        @keyframes fly-RtoL {
+            0% { transform: translate(110vw, 110vh) rotate(20deg) scaleX(-1) scale(0.25); opacity: 0; }
             15% { opacity: 0.15; }
             85% { opacity: 0.15; }
-            100% { transform: translate(-30vw, 0vh) rotate(25deg) scaleX(-1) scale(0.4); opacity: 0; }
+            100% { transform: translate(-30vw, 10vh) rotate(35deg) scaleX(-1) scale(0.4); opacity: 0; }
         }
 
-        /* 左から右上へ（深層：微細な動き） */
-        @keyframes fly-LtoR-Back {
-            0% { transform: translate(-20vw, 80vh) rotate(-10deg) scale(0.1); opacity: 0; }
-            15% { opacity: 0.1; }
-            85% { opacity: 0.1; }
-            100% { transform: translate(110vw, 20vh) rotate(-20deg) scale(0.15); opacity: 0; }
-        }
+        .atom-1 { animation: fly-LtoR 16s linear infinite; width: 320px; }
+        .atom-2 { animation: fly-RtoL 22s linear infinite; animation-delay: -6s; width: 220px; }
 
-        .atom-1 { animation: fly-LtoR-Front 16s linear infinite; width: 320px; }
-        .atom-2 { animation: fly-RtoL-Mid 22s linear infinite; animation-delay: -5s; width: 220px; }
-        .atom-3 { animation: fly-LtoR-Back 30s linear infinite; animation-delay: -12s; width: 160px; }
-
-        /* --- 右下インタラクティブ・アトム --- */
+        /* 右下インタラクティブ・アトム（本来の位置） */
         .interactive-atom {
             position: fixed;
             bottom: 2rem;
             right: 2rem;
             z-index: 100;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
         .atom-disc {
             width: 70px;
@@ -95,7 +88,6 @@
             background: #000;
             transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
             overflow: hidden;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
         .is-active .atom-disc {
             border-color: #00ffff;
@@ -107,7 +99,7 @@
             transition: opacity 0.5s ease;
         }
         .is-active .atom-face-img {
-            animation: record-spin 10s linear infinite;
+            animation: record-spin 8s linear infinite;
             opacity: 1;
         }
         @keyframes record-spin {
@@ -133,7 +125,7 @@
         // --- Hooks ---
         const useScramble = (text, delay = 0) => {
             const [val, setVal] = useState('');
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
             useEffect(() => {
                 let frame = 0;
                 const tid = setTimeout(() => {
@@ -144,7 +136,7 @@
                         }).join(''));
                         if (frame > text.length + 12) clearInterval(int);
                         frame++;
-                    }, 35);
+                    }, 30);
                 }, delay);
                 return () => clearTimeout(tid);
             }, [text, delay]);
@@ -157,14 +149,14 @@
             useEffect(() => {
                 const obs = new IntersectionObserver(([e]) => {
                     if (e.isIntersecting) { setShow(true); obs.unobserve(e.target); }
-                }, { threshold: 0.1 });
+                }, { threshold: 0.05 });
                 if (ref.current) obs.observe(ref.current);
                 return () => { if (ref.current) obs.unobserve(ref.current); };
             }, []);
             return [ref, show];
         };
 
-        // --- 3D Background with High-Speed Meteors ---
+        // --- 3D Background with Meteors ---
         const Background3D = () => {
             const mountRef = useRef(null);
             useEffect(() => {
@@ -172,7 +164,7 @@
                 const init = () => {
                     const THREE = window.THREE;
                     scene = new THREE.Scene();
-                    scene.fog = new THREE.FogExp2(0x020205, 0.0018);
+                    scene.fog = new THREE.FogExp2(0x020205, 0.002);
                     camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 2000);
                     camera.position.z = 600;
                     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -180,35 +172,35 @@
                     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                     if (mountRef.current) mountRef.current.appendChild(renderer.domElement);
 
-                    // 星屑
+                    // Stars
                     const starsGeo = new THREE.BufferGeometry();
-                    const pos = new Float32Array(2000 * 3);
-                    for(let i=0; i<6000; i++) pos[i] = (Math.random()-0.5)*2000;
+                    const pos = new Float32Array(2500 * 3);
+                    for(let i=0; i<7500; i++) pos[i] = (Math.random()-0.5)*2000;
                     starsGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
                     stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.2, color: 0xffffff, transparent: true, opacity: 0.6 }));
                     scene.add(stars);
 
-                    // 流れ星：視認性を極限まで高めたシリンダー
+                    // Meteors
                     const createMeteor = () => {
-                        const mGeo = new THREE.CylinderGeometry(0.8, 0, 80, 4);
-                        const mMat = new THREE.MeshBasicMaterial({ color: 0x88e4ff, transparent: true, opacity: 0.8 });
+                        const mGeo = new THREE.CylinderGeometry(0.8, 0, 150, 4);
+                        const mMat = new THREE.MeshBasicMaterial({ color: 0x88e4ff, transparent: true, opacity: 0.9 });
                         const m = new THREE.Mesh(mGeo, mMat);
-                        m.position.set((Math.random()-0.5)*1800, 800+Math.random()*400, (Math.random()-0.5)*800);
-                        m.rotation.set(Math.PI/6, 0, -Math.PI/4);
+                        m.position.set((Math.random()-0.5)*2000, 800+Math.random()*400, (Math.random()-0.5)*600);
+                        m.rotation.set(Math.PI/4, 0, -Math.PI/4);
                         scene.add(m);
-                        return { mesh: m, speed: 20 + Math.random()*30 };
+                        return { mesh: m, speed: 30 + Math.random()*35 };
                     };
-                    for(let i=0; i<15; i++) meteors.push(createMeteor());
+                    for(let i=0; i<25; i++) meteors.push(createMeteor());
 
                     const animate = () => {
                         animationId = requestAnimationFrame(animate);
-                        stars.rotation.y += 0.0002;
+                        stars.rotation.y += 0.0001;
                         meteors.forEach(obj => {
                             obj.mesh.position.y -= obj.speed;
-                            obj.mesh.position.x -= obj.speed * 0.6;
-                            if(obj.mesh.position.y < -1000) {
-                                obj.mesh.position.y = 1000;
-                                obj.mesh.position.x = (Math.random()-0.5)*1800;
+                            obj.mesh.position.x -= obj.speed * 0.8;
+                            if(obj.mesh.position.y < -1200) {
+                                obj.mesh.position.y = 1200;
+                                obj.mesh.position.x = (Math.random()-0.5)*2000;
                             }
                         });
                         renderer.render(scene, camera);
@@ -216,9 +208,7 @@
                     animate();
                 };
                 const check = setInterval(() => { if (window.THREE) { clearInterval(check); init(); } }, 100);
-                const resize = () => { if(camera && renderer) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }};
-                window.addEventListener('resize', resize);
-                return () => { clearInterval(check); window.removeEventListener('resize', resize); cancelAnimationFrame(animationId); };
+                return () => { clearInterval(check); cancelAnimationFrame(animationId); };
             }, []);
             return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none" />;
         };
@@ -235,23 +225,23 @@
                     setM({ x: (e.clientX-r.left)/r.width-0.5, y: (e.clientY-r.top)/r.height-0.5 });
                     setHover(true);
                 }} onMouseLeave={() => setHover(false)} className="w-full">
-                    <div className="transition-all duration-[1s] ease-out" style={{ opacity: finalShow ? 1 : 0, transform: finalShow ? 'none' : 'translateY(40px)' }}>
+                    <div className="transition-all duration-[1s] ease-out" style={{ opacity: finalShow ? 1 : 0, transform: finalShow ? 'none' : 'translateY(30px)' }}>
                         <div className="relative overflow-hidden aspect-video bg-[#010103] rounded-sm shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)]" style={{
-                            transform: `perspective(1200px) rotateX(${m.y*-8}deg) rotateY(${m.x*8}deg) scale(${hover?1.02:1})`,
+                            transform: `perspective(1200px) rotateX(${m.y*-6}deg) rotateY(${m.x*6}deg) scale(${hover?1.01:1})`,
                             transition: 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)'
                         }}>
                              <img src={p.img} className="w-full h-full object-contain opacity-95 group-hover:opacity-100 transition-opacity duration-700" />
                              {hover && (
-                                <div className="absolute inset-0 mix-blend-screen opacity-60 pointer-events-none" style={{ transform: `translate(${m.x*30}px, ${m.y*30}px)` }}>
+                                <div className="absolute inset-0 mix-blend-screen opacity-50 pointer-events-none" style={{ transform: `translate(${m.x*25}px, ${m.y*25}px)` }}>
                                     <img src={p.img} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(180deg) saturate(600%) brightness(1.2)' }} />
                                 </div>
                              )}
                              <div className="scanlines" />
                         </div>
-                        {/* 圧縮された黄金比距離：mt-6 */}
-                        <div className="mt-6 px-1">
+                        {/* mt-4 のタイトな密度を維持 */}
+                        <div className="mt-4 px-1">
                             <h3 className="text-xl md:text-4xl font-black tracking-tighter uppercase group-hover:text-cyan-400 transition-colors duration-500">{p.title}</h3>
-                            <p className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mt-2 group-hover:text-gray-300 transition-colors">{p.type}</p>
+                            <p className="text-[9px] md:text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mt-1 group-hover:text-gray-300 transition-colors">{p.type}</p>
                         </div>
                     </div>
                 </div>
@@ -267,7 +257,7 @@
                             <img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="atom-face-img" alt="" />
                         </div>
                         <div className="absolute -top-10 right-0 bg-white text-black text-[9px] font-black px-2 py-1 uppercase opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap">
-                            {active ? 'CYCLE ACTIF' : 'ACTIVER'}
+                            {active ? 'SYSTEM ON' : 'ACTIVER'}
                         </div>
                     </div>
                 </div>
@@ -281,9 +271,9 @@
             const n2 = useScramble("TOKYO", 900);
 
             useEffect(() => {
-                const move = e => setMo({ x: (e.clientX/window.innerWidth-0.5)*25, y: (e.clientY/window.innerHeight-0.5)*25 });
+                const move = e => setMo({ x: (e.clientX/window.innerWidth-0.5)*20, y: (e.clientY/window.innerHeight-0.5)*20 });
                 window.addEventListener('mousemove', move);
-                const interval = setInterval(() => { if(Math.random() > 0.95) { setGlitch(true); setTimeout(() => setGlitch(false), 120); } }, 4000);
+                const interval = setInterval(() => { if(Math.random() > 0.95) { setGlitch(true); setTimeout(() => setGlitch(false), 120); } }, 5000);
                 return () => { window.removeEventListener('mousemove', move); clearInterval(interval); };
             }, []);
 
@@ -298,14 +288,12 @@
                     <div className="noise-overlay" />
                     <Background3D />
                     
-                    {/* アトム飛翔：左右・深層の3層構造 */}
-                    <div className="atom-hologram atom-1 opacity-25"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
+                    <div className="atom-hologram atom-1 opacity-20"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
                     <div className="atom-hologram atom-2 opacity-15"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
-                    <div className="atom-hologram atom-3 opacity-10"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
 
                     <AtomControl />
 
-                    <nav className="fixed top-0 w-full z-50 p-8 mix-blend-difference flex justify-between uppercase font-bold tracking-widest text-[10px]">
+                    <nav className="fixed top-0 w-full z-50 p-6 mix-blend-difference flex justify-between uppercase font-bold tracking-widest text-[10px]">
                         <span>N.</span>
                         <div className="text-right">
                             <p className="opacity-90">Bienvenue.</p>
@@ -313,7 +301,7 @@
                         </div>
                     </nav>
 
-                    <header className="relative h-[90vh] flex flex-col justify-end pb-16 px-8 md:px-16 pointer-events-none">
+                    <header className="relative h-[80vh] flex flex-col justify-end pb-8 px-8 md:px-16 pointer-events-none">
                         <div className="max-w-[1400px] mx-auto w-full pointer-events-auto" style={{ transform: `translate3d(${mo.x}px, ${mo.y}px, 0)` }}>
                             <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.7em] mb-4 text-cyan-400 opacity-80">les aventuriers un peu fous</p>
                             <h1 className="text-[20vw] md:text-[18vw] leading-[0.75] font-black tracking-tighter uppercase select-none drop-shadow-2xl">
@@ -322,24 +310,44 @@
                         </div>
                     </header>
 
-                    <main className="relative z-10 px-8 md:px-16 py-16 bg-gradient-to-b from-transparent to-[#020205]">
-                        {/* 緊迫感のあるプロジェクト間隔 gap-y-24 md:gap-y-32 */}
-                        <div className="max-w-[1400px] mx-auto flex flex-col gap-y-24 md:gap-y-32">
+                    <main className="relative z-10 px-8 md:px-16 py-8 bg-gradient-to-b from-transparent to-[#020205]">
+                        <div className="max-w-[1400px] mx-auto flex flex-col gap-y-16 md:gap-y-24">
                             {projects.map((p, i) => <ProjectItem key={i} p={p} i={i} />)}
                         </div>
                     </main>
 
-                    <section className="relative z-10 py-48 px-8 text-center bg-[#020205]">
+                    <section className="relative z-10 py-32 px-8 text-center bg-[#020205]">
                         <h2 className="text-2xl md:text-4xl font-light leading-relaxed max-w-4xl mx-auto opacity-70">
-                            J’ai un goût prononcé pour le chocolat, le curry, le hamburger, le whisky, le vin et l’art, sans oublier les aventuriers un peu fous.
-                            <span className="block italic mt-12 text-white text-3xl md:text-4xl">Et vous, quels sont vos goûts ?</span>
+                            J’ai un goût prononcé for the chocolat, the curry, the hamburger, the whisky, the vin and l’art, sans oublier les aventuriers un peu fous.
+                            <span className="block italic mt-8 text-white text-2xl md:text-3xl">Et vous, quels sont vos goûts ?</span>
                         </h2>
                     </section>
 
-                    <footer className="relative z-10 py-32 px-8 border-t border-white/5 bg-[#020205]">
+                    <footer className="relative z-20 py-24 px-8 border-t border-white/5 bg-[#020205]">
                         <div className="max-w-[1400px] mx-auto">
-                            <p className="text-3xl md:text-7xl font-black uppercase tracking-tighter opacity-90 mb-8 hover:opacity-100 transition-opacity">On se retrouvera dans nos rêves.</p>
-                            <p className="text-[10px] opacity-20 uppercase tracking-[0.3em]">© {new Date().getFullYear()} NAO. TOKYO — Conçu dans le vide.</p>
+                            <p className="text-3xl md:text-7xl font-black uppercase tracking-tighter opacity-90 mb-12">On se retrouvera dans nos rêves.</p>
+                            
+                            <div className="flex flex-col md:flex-row justify-between items-end gap-12">
+                                <div className="order-2 md:order-1">
+                                    <p className="text-[10px] opacity-20 uppercase tracking-[0.4em]">© {new Date().getFullYear()} NAO. TOKYO — Conçu dans le vide.</p>
+                                </div>
+                                <div className="order-1 md:order-2">
+                                    {/* 17LIVE リンク：位置を調整し、アトムとの干渉を物理的に排除 */}
+                                    <div className="relative" style={{ zIndex: 110 }}>
+                                        <a 
+                                            href="https://17.live/s/u/63ea0948-9e69-46c7-6948-51c1f052e893" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="group block opacity-40 hover:opacity-100 transition-all duration-700 pointer-events-auto"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/30 group-hover:text-white/50 transition-colors">Streaming</span>
+                                                <span className="text-2xl md:text-4xl font-black tracking-tighter uppercase group-hover:text-cyan-400 transition-colors">17LIVE</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </footer>
                 </div>
