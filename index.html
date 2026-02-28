@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NAO. TOKYO - L'Art et l'Aventure</title>
-    <!-- Tailwind CSS -->
+    <title>NAO. TOKYO | Ultra-Creative</title>
+    <!-- 業界標準の外部ライブラリ -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- React & Babel for In-browser execution -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -22,7 +18,11 @@
             overflow-x: hidden;
             font-family: 'Inter', sans-serif;
             color: white;
+            cursor: crosshair;
         }
+        #root { min-height: 100vh; }
+        
+        /* 1. 環境テクスチャ：背景ノイズ */
         .noise-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -31,313 +31,218 @@
             opacity: 0.05;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
-        .global-glitch-active {
-            animation: global-glitch-anim 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-            filter: drop-shadow(3px 0 0 rgba(255, 0, 0, 0.8)) drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.8));
+
+        /* 2. グローバル・グリッチ・アニメーション */
+        .glitch-active {
+            animation: glitch-anim 0.2s infinite;
+            filter: contrast(1.5) hue-rotate(10deg);
         }
-        @keyframes global-glitch-anim {
-            0% { transform: translate(0); clip-path: inset(0 0 0 0); }
-            20% { transform: translate(-5px, 2px); clip-path: inset(20% 0 60% 0); }
-            40% { transform: translate(-2px, -2px); clip-path: inset(50% 0 30% 0); }
-            60% { transform: translate(5px, 1px); clip-path: inset(10% 0 80% 0); }
-            80% { transform: translate(-1px, 4px); clip-path: inset(80% 0 5% 0); }
-            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+        @keyframes glitch-anim {
+            0% { clip-path: inset(20% 0 30% 0); transform: translate(-2px, 1px); }
+            20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+            40% { clip-path: inset(10% 0 80% 0); transform: translate(-1px, 2px); }
+            60% { clip-path: inset(50% 0 40% 0); transform: translate(1px, -2px); }
+            80% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 0px); }
+            100% { clip-path: inset(0 0 0 0); transform: translate(0); }
         }
-        .glitch-wrapper { position: relative; display: inline-block; cursor: none; }
-        .glitch-text { position: relative; display: inline-block; color: white; }
-        .glitch-wrapper:hover .glitch-text::before,
-        .glitch-wrapper:hover .glitch-text::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent;
-        }
-        .glitch-wrapper:hover .glitch-text::before { left: 4px; text-shadow: -2px 0 red; animation: glitch-anim-1 2s infinite linear alternate-reverse; z-index: -1; }
-        .glitch-wrapper:hover .glitch-text::after { left: -4px; text-shadow: -2px 0 cyan; animation: glitch-anim-2 3s infinite linear alternate-reverse; z-index: -2; }
-        @keyframes glitch-anim-1 {
-            0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 10% 0); } 40% { clip-path: inset(40% 0 50% 0); }
-            60% { clip-path: inset(80% 0 5% 0); } 80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 20% 0); }
-        }
-        @keyframes glitch-anim-2 {
-            0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 20% 0); } 40% { clip-path: inset(70% 0 10% 0); }
-            60% { clip-path: inset(20% 0 50% 0); } 80% { clip-path: inset(50% 0 30% 0); } 100% { clip-path: inset(5% 0 80% 0); }
-        }
-        .scanlines {
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.4));
-            background-size: 100% 4px;
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-        }
+
+        /* 3. 背景を飛翔するアトム（復活と強化） */
         .atom-hologram {
             position: fixed;
             pointer-events: none;
             z-index: 2;
-            filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.4)) drop-shadow(0 0 30px rgba(0, 150, 255, 0.2));
+            filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.4));
             will-change: transform, opacity;
         }
         @keyframes fly-atom-1 {
             0% { transform: translate(-30vw, 110vh) rotate(15deg) scale(0.3); opacity: 0; }
-            10% { opacity: 0.65; }
-            90% { opacity: 0.65; }
+            10% { opacity: 0.2; }
+            90% { opacity: 0.2; }
             100% { transform: translate(110vw, -20vh) rotate(25deg) scale(0.6); opacity: 0; }
         }
         @keyframes fly-atom-2 {
             0% { transform: translate(-10vw, 130vh) rotate(5deg) scale(0.2); opacity: 0; }
-            10% { opacity: 0.4; }
-            90% { opacity: 0.4; }
+            10% { opacity: 0.1; }
+            90% { opacity: 0.1; }
             100% { transform: translate(120vw, 10vh) rotate(15deg) scale(0.4); opacity: 0; }
         }
         @keyframes fly-atom-3 {
             0% { transform: translate(110vw, 80vh) rotate(-15deg) scale(0.15) scaleX(-1); opacity: 0; }
-            10% { opacity: 0.3; }
-            90% { opacity: 0.3; }
+            10% { opacity: 0.15; }
+            90% { opacity: 0.15; }
             100% { transform: translate(-30vw, 20vh) rotate(-25deg) scale(0.25) scaleX(-1); opacity: 0; }
         }
         .atom-1 { animation: fly-atom-1 18s linear infinite; width: 350px; }
-        .atom-2 { animation: fly-atom-2 26s linear infinite; animation-delay: -8s; width: 250px; }
-        .atom-3 { animation: fly-atom-3 32s linear infinite; animation-delay: -15s; width: 180px; filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)) blur(1px); }
+        .atom-2 { animation: fly-atom-2 26s linear infinite; animation-delay: -5s; width: 250px; }
+        .atom-3 { animation: fly-atom-3 32s linear infinite; animation-delay: -12s; width: 180px; }
+
+        /* 4. インタラクティブ・アトム（右下） */
+        .interactive-atom {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            cursor: pointer;
+        }
+        .atom-disc {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            background: #000;
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow: hidden;
+        }
+        .is-active .atom-disc {
+            border-color: #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5), inset 0 0 10px rgba(0, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        .atom-face-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.4;
+            transition: opacity 0.5s ease;
+        }
+        .is-active .atom-face-img {
+            animation: record-spin 10s linear infinite;
+            opacity: 1;
+        }
+        @keyframes record-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 5. 走査線（スキャンライン） */
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%);
+            background-size: 100% 4px;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // ----------------------------------------------------------------------
-        // Custom Hooks
-        // ----------------------------------------------------------------------
-        const useGlobalGlitch = () => {
-            const [isGlitching, setIsGlitching] = useState(false);
+        // --- Hooks ---
+        const useScramble = (text, delay = 0) => {
+            const [val, setVal] = useState('');
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
             useEffect(() => {
-                let timeoutId;
-                const triggerGlitch = () => {
-                    setIsGlitching(true);
-                    setTimeout(() => setIsGlitching(false), 150 + Math.random() * 200);
-                    timeoutId = setTimeout(triggerGlitch, 3000 + Math.random() * 9000);
-                };
-                timeoutId = setTimeout(triggerGlitch, 2000);
-                return () => clearTimeout(timeoutId);
-            }, []);
-            return isGlitching;
-        };
-
-        const useIntersectionReveal = (options = { threshold: 0.1, rootMargin: '100px 0px' }) => {
-            const ref = useRef(null);
-            const [isRevealed, setIsRevealed] = useState(false);
-            const optionsRef = useRef(options);
-
-            useEffect(() => {
-                const observer = new IntersectionObserver(([entry]) => {
-                    if (entry.isIntersecting) { 
-                        setIsRevealed(true); 
-                        observer.unobserve(entry.target); 
-                    }
-                }, optionsRef.current);
-
-                const target = ref.current;
-                if (target) observer.observe(target);
-                return () => { if (target) observer.unobserve(target); };
-            }, []);
-
-            return [ref, isRevealed];
-        };
-
-        const useScramble = (text, delay = 0, duration = 1500) => {
-            const [displayText, setDisplayText] = useState('');
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
-            
-            useEffect(() => {
-                let startTimestamp = null;
-                let timeoutId;
-
-                const step = (timestamp) => {
-                    if (!startTimestamp) startTimestamp = timestamp;
-                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                    
-                    const scrambled = text.split('').map((char, index) => {
-                        if (char === ' ' || char === '.') return char;
-                        if (progress > (index / text.length)) return char;
-                        return chars[Math.floor(Math.random() * chars.length)];
-                    }).join('');
-
-                    setDisplayText(scrambled);
-                    if (progress < 1) {
-                        requestAnimationFrame(step);
-                    }
-                };
-
-                timeoutId = setTimeout(() => {
-                    requestAnimationFrame(step);
+                let frame = 0;
+                const timer = setTimeout(() => {
+                    const int = setInterval(() => {
+                        setVal(text.split('').map((c, i) => {
+                            if (c === ' ' || c === '.') return c;
+                            return frame > (i + 5) ? c : chars[Math.floor(Math.random() * chars.length)];
+                        }).join(''));
+                        if (frame > text.length + 20) clearInterval(int);
+                        frame++;
+                    }, 40);
                 }, delay);
-
-                return () => clearTimeout(timeoutId);
-            }, [text, delay, duration]);
-
-            return displayText;
+                return () => clearTimeout(timer);
+            }, [text, delay]);
+            return val;
         };
 
-        // ----------------------------------------------------------------------
-        // Components
-        // ----------------------------------------------------------------------
+        const useIntersection = () => {
+            const ref = useRef(null);
+            const [show, setShow] = useState(false);
+            useEffect(() => {
+                const obs = new IntersectionObserver(([e]) => {
+                    if (e.isIntersecting) { setShow(true); obs.unobserve(e.target); }
+                }, { threshold: 0.1 });
+                if (ref.current) obs.observe(ref.current);
+                return () => { if (ref.current) obs.unobserve(ref.current); };
+            }, []);
+            return [ref, show];
+        };
+
+        // --- Components ---
         const Background3D = () => {
             const mountRef = useRef(null);
             useEffect(() => {
-                let scene, camera, renderer, animationId;
-                let stars, meteors = [];
-
-                const initThree = () => {
+                let renderer, scene, camera, stars, animationId;
+                const init = () => {
                     const THREE = window.THREE;
                     scene = new THREE.Scene();
                     scene.fog = new THREE.FogExp2(0x020205, 0.0015);
-                    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
-                    camera.position.set(0, 0, 600);
+                    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 2000);
+                    camera.position.z = 600;
                     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                     renderer.setSize(window.innerWidth, window.innerHeight);
                     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                     if (mountRef.current) mountRef.current.appendChild(renderer.domElement);
-
                     const starsGeo = new THREE.BufferGeometry();
-                    const posArray = new Float32Array(3000 * 3);
-                    for(let i = 0; i < 9000; i++) posArray[i] = (Math.random() - 0.5) * 2000;
-                    starsGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                    stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.5, color: 0xffffff, transparent: true, opacity: 0.8 }));
+                    const pos = new Float32Array(3000 * 3);
+                    for(let i=0; i<9000; i++) pos[i] = (Math.random()-0.5)*2000;
+                    starsGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                    stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.2, color: 0xffffff, transparent: true, opacity: 0.5 }));
                     scene.add(stars);
-
-                    const createMeteor = () => {
-                        const geo = new THREE.CylinderGeometry(0.5, 0, 40, 4); geo.translate(0, 20, 0); 
-                        const mat = new THREE.MeshBasicMaterial({ color: 0xcceeff, transparent: true, opacity: Math.random() * 0.5 + 0.5 });
-                        const m = new THREE.Mesh(geo, mat);
-                        m.position.set((Math.random() - 0.5) * 1500, 800 + Math.random() * 500, (Math.random() - 0.5) * 1000);
-                        m.rotation.set(Math.PI / 8, 0, -Math.PI / 4);
-                        scene.add(m);
-                        return { mesh: m, speed: Math.random() * 15 + 10 };
-                    };
-                    for(let i = 0; i < 15; i++) meteors.push(createMeteor());
-
-                    const clock = new THREE.Clock();
                     const animate = () => {
                         animationId = requestAnimationFrame(animate);
-                        const t = clock.getElapsedTime();
-                        if (stars) { stars.rotation.y = t * 0.02; stars.rotation.x = t * 0.01; }
-                        meteors.forEach(m => {
-                            m.mesh.position.x -= m.speed * 0.5; m.mesh.position.y -= m.speed; m.mesh.position.z -= m.speed * 0.2;
-                            if (m.mesh.position.y < -800) m.mesh.position.set((Math.random() - 0.5) * 1500, 800 + Math.random() * 500, (Math.random() - 0.5) * 1000);
-                        });
+                        stars.rotation.y += 0.0002;
                         renderer.render(scene, camera);
                     };
                     animate();
-                    const handleResize = () => {
-                        camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
-                        renderer.setSize(window.innerWidth, window.innerHeight);
-                    };
-                    window.addEventListener('resize', handleResize);
-                    return () => { window.removeEventListener('resize', handleResize); cancelAnimationFrame(animationId); };
                 };
-                initThree();
+                const check = setInterval(() => { if (window.THREE) { clearInterval(check); init(); } }, 100);
+                return () => { clearInterval(check); cancelAnimationFrame(animationId); };
             }, []);
             return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none" />;
         };
 
-        const FlyingAtoms = () => (
-            <>
-                <div className="atom-hologram atom-1"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" alt="" className="w-full h-full object-contain" /></div>
-                <div className="atom-hologram atom-2"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" alt="" className="w-full h-full object-contain" /></div>
-                <div className="atom-hologram atom-3"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" alt="" className="w-full h-full object-contain" /></div>
-            </>
-        );
+        const ProjectItem = ({ p, i }) => {
+            const [ref, show] = useIntersection();
+            const [m, setM] = useState({ x: 0, y: 0 });
+            const [hover, setHover] = useState(false);
+            const finalShow = i === 0 ? true : show;
 
-        const RevealText = ({ children, delay = 0, className = "" }) => {
-            const [ref, isRevealed] = useIntersectionReveal();
             return (
-                <div ref={ref} className="overflow-hidden inline-block align-bottom">
-                    <div className={`transition-transform duration-[1.2s] ease-[cubic-bezier(0.19,1,0.22,1)] ${className}`} style={{ transform: isRevealed ? 'translateY(0)' : 'translateY(110%)', transitionDelay: `${delay}ms` }}>
-                        {children}
+                <div ref={ref} onMouseMove={e => {
+                    const r = ref.current.getBoundingClientRect();
+                    setM({ x: (e.clientX-r.left)/r.width-0.5, y: (e.clientY-r.top)/r.height-0.5 });
+                    setHover(true);
+                }} onMouseLeave={() => setHover(false)} className="w-full">
+                    <div className="transition-all duration-[1.2s] ease-out" style={{ opacity: finalShow ? 1 : 0, transform: finalShow ? 'none' : 'translateY(80px)' }}>
+                        <div className="relative overflow-hidden aspect-video bg-[#010103] rounded-sm shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)]" style={{
+                            transform: `perspective(1500px) rotateX(${m.y*-8}deg) rotateY(${m.x*8}deg) scale(${hover?1.03:1})`,
+                            transition: 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)'
+                        }}>
+                             <img src={p.img} className="w-full h-full object-contain opacity-95 group-hover:opacity-100 transition-opacity duration-700" />
+                             {hover && (
+                                <div className="absolute inset-0 mix-blend-screen opacity-60 pointer-events-none" style={{ transform: `translate(${m.x*40}px, ${m.y*40}px)` }}>
+                                    <img src={p.img} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(180deg) saturate(600%) brightness(1.2)' }} />
+                                </div>
+                             )}
+                             <div className="scanlines" />
+                        </div>
+                        {/* 正確な均衡のためのマージン設定 mt-12 */}
+                        <div className="mt-12 px-1">
+                            <h3 className="text-2xl md:text-5xl font-black tracking-tighter uppercase group-hover:text-cyan-400 transition-colors duration-500">{p.title}</h3>
+                            <p className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-gray-500 mt-4 group-hover:text-gray-300 transition-colors">{p.type}</p>
+                        </div>
                     </div>
                 </div>
             );
         };
 
-        const GlitchText = ({ text, className = "" }) => (
-            <div className={`glitch-wrapper ${className}`}>
-                <span className="glitch-text" data-text={text}>{text}</span>
-            </div>
-        );
-
-        const QuantumDisruptionImage = ({ src, alt, aspectRatio, mousePos, isHovering, isRevealed }) => (
-            <div className={`relative overflow-hidden ${aspectRatio} bg-[#020205] rounded-sm`} style={{ 
-                transform: `perspective(1200px) rotateX(${mousePos.y * -20}deg) rotateY(${mousePos.x * 20}deg) scale3d(1.05, 1.05, 1.05)`,
-                transition: isHovering ? 'transform 0.1s ease-out' : 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                boxShadow: isHovering ? '0 30px 60px rgba(0,0,0,0.9), 0 0 50px rgba(0,255,255,0.2)' : 'none'
-            }}>
-                <div className="absolute inset-0 bg-[#020205] z-10 transition-transform duration-[1.5s] ease-[cubic-bezier(0.19,1,0.22,1)]" style={{ transform: isRevealed ? 'translateY(-100%)' : 'translateY(0)' }} />
-                <img src={src} alt={alt} className={`relative z-20 w-full h-full object-contain transition-all duration-700 ${isHovering ? 'contrast-125 brightness-110' : 'opacity-90 contrast-100'}`} />
-                <div className="absolute inset-0 z-30 w-full h-full pointer-events-none transition-all duration-100 mix-blend-screen" style={{ opacity: isHovering ? 0.8 : 0, transform: `translate(${mousePos.x * 60}px, ${mousePos.y * 60}px) scale(1.05)` }}>
-                    <img src={src} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(250deg) saturate(400%) contrast(2)' }} />
-                </div>
-                <div className="absolute inset-0 z-40 w-full h-full pointer-events-none transition-all duration-200 mix-blend-screen" style={{ opacity: isHovering ? 0.8 : 0, transform: `translate(${mousePos.x * -60}px, ${mousePos.y * -60}px) scale(1.05)` }}>
-                    <img src={src} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(90deg) saturate(400%) contrast(2)' }} />
-                </div>
-                {isHovering && <div className="scanlines z-50 opacity-100" />}
-            </div>
-        );
-
-        const KineticPhantomImage = ({ src, alt, aspectRatio, mousePos, isHovering, isRevealed }) => (
-            <div className={`relative overflow-hidden ${aspectRatio} bg-[#020205] rounded-sm`} style={{ 
-                transform: `perspective(1200px) rotateX(${mousePos.y * -15}deg) rotateY(${mousePos.x * 15}deg) scale3d(1.02, 1.02, 1.02)`,
-                transition: isHovering ? 'transform 0.1s ease-out' : 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                boxShadow: isHovering ? '0 30px 60px rgba(0,0,0,0.8), 0 0 50px rgba(255,0,255,0.1)' : 'none'
-            }}>
-                <div className="absolute inset-0 bg-[#020205] z-10 transition-transform duration-[1.5s] ease-[cubic-bezier(0.19,1,0.22,1)]" style={{ transform: isRevealed ? 'translateY(-100%)' : 'translateY(0)' }} />
-                <img src={src} alt={alt} className={`relative z-20 w-full h-full object-contain transition-all duration-700 ${isHovering ? 'brightness-110' : 'opacity-90'}`} />
-                <div className="absolute inset-0 z-30 w-full h-full pointer-events-none transition-all duration-100 mix-blend-screen" style={{ opacity: isHovering ? 0.7 : 0, transform: `translate(${mousePos.x * 40}px, ${mousePos.y * 40}px)` }}>
-                    <img src={src} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(-50deg) saturate(500%) contrast(1.5)' }} />
-                </div>
-                <div className="absolute inset-0 z-40 w-full h-full pointer-events-none transition-all duration-200 mix-blend-screen" style={{ opacity: isHovering ? 0.7 : 0, transform: `translate(${mousePos.x * -40}px, ${mousePos.y * -40}px)` }}>
-                    <img src={src} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(150deg) saturate(500%) contrast(1.5)' }} />
-                </div>
-                {isHovering && <div className="scanlines z-50 opacity-60" />}
-            </div>
-        );
-
-        const HoloShatterImage = ({ src, alt, aspectRatio, mousePos, isHovering, isRevealed }) => (
-            <div className={`relative overflow-hidden ${aspectRatio} bg-[#020205] rounded-sm`} style={{ 
-                transform: `perspective(1200px) rotateX(${mousePos.y * -20}deg) rotateY(${mousePos.x * 20}deg) scale3d(1.05, 1.05, 1.05)`,
-                transition: isHovering ? 'transform 0.1s ease-out' : 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                boxShadow: isHovering ? '0 30px 60px rgba(0,0,0,0.9), 0 0 50px rgba(0,255,255,0.2)' : 'none'
-            }}>
-                <div className="absolute inset-0 bg-[#020205] z-10 transition-transform duration-[1.5s] ease-[cubic-bezier(0.19,1,0.22,1)]" style={{ transform: isRevealed ? 'translateY(-100%)' : 'translateY(0)' }} />
-                <img src={src} alt={alt} className={`relative z-20 w-full h-full object-contain transition-all duration-700 ${isHovering ? 'brightness-110' : 'opacity-90'}`} />
-                <div className="absolute inset-0 z-30 w-full h-full pointer-events-none transition-all duration-75 mix-blend-screen" style={{ opacity: isHovering ? 0.9 : 0, transform: `translate(${mousePos.x * 80}px, ${mousePos.y * 80}px) scale(1.1)` }}>
-                    <img src={src} className="w-full h-full object-contain" style={{ filter: 'invert(1) hue-rotate(90deg) opacity(0.5)' }} />
-                </div>
-                <div className="absolute inset-0 z-40 w-full h-full pointer-events-none transition-all duration-150 mix-blend-screen" style={{ opacity: isHovering ? 0.9 : 0, transform: `translate(${-mousePos.x * 80}px, ${-mousePos.y * 80}px) scale(1.1)` }}>
-                    <img src={src} className="w-full h-full object-contain" style={{ filter: 'sepia(1) hue-rotate(-90deg) saturate(300%) opacity(0.6)' }} />
-                </div>
-                {isHovering && <div className="scanlines z-50 opacity-90" />}
-            </div>
-        );
-
-        const ProjectItem = ({ project, index }) => {
-            const [ref, isRevealed] = useIntersectionReveal();
-            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-            const [isHovering, setIsHovering] = useState(false);
-            const EffectComponent = project.Component;
-            const finalRevealed = index === 0 ? true : isRevealed;
-
-            const handleMouseMove = (e) => {
-                if (!ref.current) return;
-                const { left, top, width, height } = ref.current.getBoundingClientRect();
-                setMousePos({ x: (e.clientX - left) / width - 0.5, y: (e.clientY - top) / height - 0.5 });
-                setIsHovering(true);
-            };
-
+        const AtomControl = () => {
+            const [active, setActive] = useState(false);
             return (
-                <div ref={ref} onMouseMove={handleMouseMove} onMouseLeave={() => { setMousePos({ x: 0, y: 0 }); setIsHovering(false); }} className="w-full group">
-                    <div className="block cursor-none">
-                        <div className="transition-all duration-1000 ease-out" style={{ opacity: finalRevealed ? 1 : 0, transform: finalRevealed ? 'translateY(0)' : 'translateY(40px)' }}>
-                            <EffectComponent src={project.img} alt={project.title} aspectRatio={project.aspect} mousePos={mousePos} isHovering={isHovering} isRevealed={finalRevealed} />
+                <div className={`interactive-atom ${active ? 'is-active' : ''}`} onClick={() => setActive(!active)}>
+                    <div className="relative flex items-center justify-center">
+                        <div className="atom-disc">
+                            <img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="atom-face-img" alt="" />
                         </div>
-                        <div className="mt-8 px-1">
-                            <h3 className="text-lg md:text-2xl lg:text-3xl leading-tight font-black tracking-tighter uppercase group-hover:text-gray-300 transition-colors">{project.title}</h3>
-                            <p className="text-[10px] md:text-xs leading-relaxed font-bold uppercase tracking-[0.2em] text-gray-500 mt-2 group-hover:text-gray-400 transition-colors">{project.type}</p>
+                        <div className="absolute -top-10 right-0 bg-white text-black text-[9px] font-black px-2 py-1 uppercase opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap">
+                            {active ? 'SYSTEM ON' : 'ACTIVATE'}
                         </div>
                     </div>
                 </div>
@@ -345,89 +250,72 @@
         };
 
         const App = () => {
-            const isGlobalGlitch = useGlobalGlitch();
-            const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
-            const name1 = useScramble("NAO.", 500);
-            const name2 = useScramble("TOKYO", 800);
+            const [glitch, setGlitch] = useState(false);
+            const [mo, setMo] = useState({ x: 0, y: 0 });
+            const n1 = useScramble("NAO.", 600);
+            const n2 = useScramble("TOKYO", 1000);
 
             useEffect(() => {
-                const move = (e) => setMouseOffset({ x: (e.clientX / window.innerWidth - 0.5) * 40, y: (e.clientY / window.innerHeight - 0.5) * 40 });
+                const move = e => setMo({ x: (e.clientX/window.innerWidth-0.5)*30, y: (e.clientY/window.innerHeight-0.5)*30 });
                 window.addEventListener('mousemove', move);
-                return () => window.removeEventListener('mousemove', move);
+                // 周期的なデジタルグリッチ
+                const interval = setInterval(() => { if(Math.random() > 0.9) { setGlitch(true); setTimeout(() => setGlitch(false), 150); } }, 5000);
+                return () => { window.removeEventListener('mousemove', move); clearInterval(interval); };
             }, []);
 
             const projects = [
-                { title: "Dans le ciel de l’impression", type: "Impression, soleil levant", img: "https://fellow-gray-simpktqghk.edgeone.app/IMG_8201.jpeg", aspect: "aspect-[4/3] md:aspect-[16/9]", Component: QuantumDisruptionImage },
-                { title: "Franchir l’angoisse", type: "Le Cri", img: "https://asleep-aquamarine-6xmvetmk0h.edgeone.app/IMG_8206.jpeg", aspect: "aspect-[4/3] md:aspect-[16/9]", Component: KineticPhantomImage },
-                { title: "Échappée hors du temps", type: "La Persistance de la mémoire", img: "https://improved-amethyst-wepnn6hasa.edgeone.app/IMG_8207.jpeg", aspect: "aspect-[4/3] md:aspect-[16/9]", Component: HoloShatterImage }
+                { title: "Dans le ciel de l’impression", type: "Impression, soleil levant", img: "https://fellow-gray-simpktqghk.edgeone.app/IMG_8201.jpeg" },
+                { title: "Franchir l’angoisse", type: "Le Cri", img: "https://asleep-aquamarine-6xmvetmk0h.edgeone.app/IMG_8206.jpeg" },
+                { title: "Échappée hors du temps", type: "La Persistance de la mémoire", img: "https://improved-amethyst-wepnn6hasa.edgeone.app/IMG_8207.jpeg" }
             ];
 
             return (
-                <div className={`min-h-screen selection:bg-cyan-500 selection:text-white ${isGlobalGlitch ? 'global-glitch-active' : ''}`}>
+                <div className={`relative min-h-screen ${glitch ? 'glitch-active' : ''}`}>
                     <div className="noise-overlay" />
                     <Background3D />
-                    <FlyingAtoms />
                     
-                    <nav className="fixed top-0 w-full z-50 p-6 mix-blend-difference">
-                        <div className="flex justify-between items-start text-sm md:text-base font-bold uppercase tracking-widest">
-                            <span className="cursor-none"><GlitchText text="N." /></span>
-                            <div className="flex flex-col items-end gap-1 text-right">
-                                <span className="opacity-90">Bienvenue.</span>
-                                <span className="opacity-50 text-[10px] md:text-xs">Sans raison particulière.</span>
-                            </div>
+                    {/* 背景飛翔アトムの復活 */}
+                    <div className="atom-hologram atom-1 opacity-20"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
+                    <div className="atom-hologram atom-2 opacity-10"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
+                    <div className="atom-hologram atom-3 opacity-15"><img src="https://yielding-harlequin-rvt2qzd10l.edgeone.app/IMG_8212.png" className="w-full" /></div>
+
+                    <AtomControl />
+
+                    <nav className="fixed top-0 w-full z-50 p-10 mix-blend-difference flex justify-between uppercase font-bold tracking-widest text-[10px]">
+                        <span>N.</span>
+                        <div className="text-right">
+                            <p className="opacity-90">Bienvenue.</p>
+                            <p className="opacity-40 text-[8px]">Sans raison particulière.</p>
                         </div>
                     </nav>
 
-                    <header className="relative h-screen flex flex-col justify-end pb-24 px-6 md:px-12 text-white z-10 pointer-events-none">
-                        <div className="max-w-[1400px] mx-auto w-full pointer-events-auto" style={{ transform: `translate3d(${mouseOffset.x}px, ${mouseOffset.y}px, 0)` }}>
-                            <p className="text-xs md:text-sm font-bold uppercase tracking-[0.5em] mb-4 md:mb-8 ml-1 md:ml-2 text-cyan-400/80 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                                <RevealText>les aventuriers un peu fous</RevealText>
-                            </p>
-                            <h1 className="text-[16vw] leading-[0.75] font-black tracking-tighter uppercase select-none">
-                                <div className="inline-block relative">
-                                    <span className="opacity-0">{name1}</span>
-                                    <span className="absolute left-0 top-0 text-white fill-none" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.1)' }}>{name1}</span>
-                                    <span className="absolute left-0 top-0">{name1}</span>
-                                </div><br />
-                                <div className="inline-block relative">
-                                    <span className="opacity-0">{name2}</span>
-                                    <span className="absolute left-0 top-0 text-white fill-none" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.1)' }}>{name2}</span>
-                                    <span className="absolute left-0 top-0 text-cyan-500/20 mix-blend-screen" style={{ transform: `translate(${mouseOffset.x*0.5}px, ${mouseOffset.y*0.5}px)` }}>{name2}</span>
-                                    <span className="absolute left-0 top-0">{name2}</span>
-                                </div>
+                    <header className="relative h-screen flex flex-col justify-end pb-32 px-10 md:px-20 pointer-events-none">
+                        <div className="max-w-[1400px] mx-auto w-full pointer-events-auto" style={{ transform: `translate3d(${mo.x}px, ${mo.y}px, 0)` }}>
+                            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.7em] mb-8 text-cyan-400 opacity-80">les aventuriers un peu fous</p>
+                            <h1 className="text-[20vw] md:text-[18vw] leading-[0.75] font-black tracking-tighter uppercase select-none drop-shadow-2xl">
+                                {n1}<br/>{n2}
                             </h1>
                         </div>
                     </header>
 
-                    <section id="work" className="relative py-24 md:py-48 px-6 md:px-12 z-10 bg-gradient-to-b from-transparent to-[#020205]">
-                        <div className="max-w-[1400px] mx-auto flex flex-col gap-y-32 md:gap-y-64">
-                            {projects.map((p, i) => <ProjectItem key={i} project={p} index={i} />)}
+                    <main className="relative z-10 px-10 md:px-20 py-48 bg-gradient-to-b from-transparent via-[#020205]/80 to-[#020205]">
+                        {/* 作品間の静寂を gap-y-64/80 で確保 */}
+                        <div className="max-w-[1400px] mx-auto flex flex-col gap-y-64 md:gap-y-96">
+                            {projects.map((p, i) => <ProjectItem key={i} p={p} i={i} />)}
                         </div>
+                    </main>
+
+                    <section className="relative z-10 py-80 px-10 text-center">
+                        <h2 className="text-2xl md:text-5xl font-light leading-relaxed max-w-5xl mx-auto opacity-70">
+                            J’ai un goût prononcé pour le chocolat, le curry, le hamburger, le whisky, le vin et l’art, sans oublier les aventuriers un peu fous.
+                            <span className="block italic mt-16 text-white text-3xl md:text-4xl">Et vous, quels sont vos goûts ?</span>
+                        </h2>
                     </section>
 
-                    <section className="relative py-32 md:py-64 px-6 md:px-12 z-10 flex items-center justify-center text-left md:text-center">
-                        <div className="max-w-[1200px] mx-auto flex flex-col gap-16 md:gap-24">
-                            <h2 className="text-[4.5vw] md:text-[2.2vw] leading-[1.6] font-light tracking-wide text-gray-300 max-w-4xl mx-auto">
-                                <RevealText>J’ai un goût prononcé pour le chocolat, le curry, le hamburger, le whisky, le vin et l’art, sans oublier les aventuriers un peu fous.</RevealText><br className="hidden md:block" />
-                                <RevealText delay={100}><span className="text-white italic font-serif mt-4 inline-block">Et vous, quels sont vos goûts ?</span></RevealText>
-                            </h2>
-                            <h3 className="text-[7vw] md:text-[4.5vw] leading-[1.1] font-black tracking-tighter uppercase drop-shadow-2xl">
-                                <RevealText delay={200}><GlitchText text="Faire d’une vie ordinaire" /></RevealText><br />
-                                <RevealText delay={300}><GlitchText text="une aventure vibrante." /></RevealText><br />
-                                <RevealText delay={400}><span className="text-gray-500">Insuffler des couleurs à l’existence.</span></RevealText>
-                            </h3>
-                        </div>
-                    </section>
-
-                    <footer className="relative pt-32 pb-12 px-6 md:px-12 z-10 bg-[#020205]">
-                        <div className="max-w-[1400px] mx-auto border-t border-white/10 pt-24">
-                            <div className="flex justify-between items-center mb-24">
-                                <p className="text-2xl md:text-5xl font-black tracking-tighter uppercase opacity-80 hover:opacity-100 transition-opacity">On se retrouvera dans nos rêves.</p>
-                            </div>
-                            <div className="flex flex-col md:flex-row justify-between text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-gray-600">
-                                <p>© {new Date().getFullYear()} NAO. TOKYO</p>
-                                <p className="mt-4 md:mt-0">Conçu et construit dans le vide.</p>
-                            </div>
+                    <footer className="relative z-10 py-64 px-10 border-t border-white/5 bg-[#020205]">
+                        <div className="max-w-[1400px] mx-auto">
+                            <p className="text-4xl md:text-8xl font-black uppercase tracking-tighter opacity-90 mb-20 hover:opacity-100 transition-opacity cursor-none">On se retrouvera dans nos rêves.</p>
+                            <p className="text-[10px] opacity-20 uppercase tracking-[0.4em]">© {new Date().getFullYear()} NAO. TOKYO — Conçu dans le vide.</p>
                         </div>
                     </footer>
                 </div>
